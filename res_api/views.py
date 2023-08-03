@@ -1,48 +1,99 @@
 from django.shortcuts import render
 from .models import Post
 from .serializers import PostSerializer
-from django.http import JsonResponse,HttpResponse
-from rest_framework.parsers import JSONParser
-from django.views.decorators.csrf import csrf_exempt
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from django.http import Http404
+# Class Based API
 
-# Create your views here.
- 
-@csrf_exempt
-def PostView (request):
+from rest_framework.views import APIView
 
-    if request.method=='GET':
-        post=Post.objects.all()
+class PostAPIView(APIView):
+    def get(self,request):
+        post=Post.objects.all()#query Set
         serializer=PostSerializer(post,many=True)
-        return JsonResponse (serializer.data,safe=False)
-    
-    elif request.method =='POST':
-        data=JSONParser().parse(request)
-        serializer=PostSerializer(data=data)
+        return Response (serializer.data)
+
+    def post (self,request):
+        serializer=PostSerializer(data=request.data)
 
         if serializer.is_valid():
             serializer.save()
-            return JsonResponse(serializer.data,status=201)
-        return JsonResponse(serializer.errors,status=400)
+            return Response(serializer.data,status=201)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+class DetailsAPIView(APIView):
+    def get_objt(self,pk):
+        try:
+            return Post.objects.get(pk=pk)
+        except Post.DoesNotExist:
+          raise Http404
+    def get(self,request,pk):
+        post= self.get_objt(pk)
+        serializer=PostSerializer(post)
+        return Response(serializer.data)
+    def put(self,request,pk):
+        post= self.get_objt(pk)
+        serializer = PostSerializer(post,data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        
+        return Response(serializer.errors,satus=status.HTTP_400_BAD_REQUEST)
+    
+
+    def delete(self,request,pk):
+        post= self.get_objt(pk)
+        post.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
+
+# Create FUnction your views here.
+ 
+@api_view(['GET','POST'])
+def PostView (request):
+
+    if request.method=='GET':
+        post=Post.objects.all()#query Set
+        serializer=PostSerializer(post,many=True)
+        return Response (serializer.data)
+    
+    elif request.method =='POST':
+   
+        serializer=PostSerializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data,status=201)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
     else:
         return ("Hello")
     
+@api_view(['GET','PUT',"DELETE"])
 def Post_Details(request,pk):
     try:
         post=Post.objects.get(pk=pk)
     except post.DoesNotExist:
-        return HttpResponse(status=404)
+        return Response(status=404)
 
     if request.method=='GET':
         serializer=PostSerializer(post)
-        return JsonResponse(serializer.data)
+        return Response(serializer.data)
     elif request.method=='PUT':
-        data=JSONParser().parse(request)
-        serializer = PostSerializer(post,data=data)
+      
+        serializer = PostSerializer(post,data=request.data)
 
         if serializer.is_valid():
             serializer.save()
-            return JsonResponse(serializer.data)
+            return Response(serializer.data)
         
-        return JsonResponse(serializer.errors,satus=400)
+        return Response(serializer.errors,satus=400)
+    elif request.method=='DELETE':
+        post.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
     
 
