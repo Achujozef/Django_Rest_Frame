@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     #my app
     'res_api',
     #3rd Party
-    'rest_framework'
+    'rest_framework',
+    'rest_framework.authtoken'
 
 ]
 

@@ -9,15 +9,22 @@ from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework import generics
 from rest_framework import mixins
+# Authentication
+from rest_framework.authentication import SessionAuthentication,BasicAuthentication,TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
 
 class genericApiView(generics.GenericAPIView,mixins.ListModelMixin,
                       mixins.CreateModelMixin,mixins.UpdateModelMixin,
                       mixins.RetrieveModelMixin,mixins.DestroyModelMixin):
+    
     serializer_class=PostSerializer
     queryset=Post.objects.all()
     lookup_field='id'
+    authentication_classes=[TokenAuthentication]
+    #authentication_classes=[SessionAuthentication,BasicAuthentication]
+    permission_classes=[IsAuthenticated]
 
-    def get(self,request,id):
+    def get(self,request,id=None):
         if id:
             return self.retrieve(request)
         else:
